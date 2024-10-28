@@ -17,7 +17,7 @@ void process_file(char *pathname) {
 		while(i >= 0 && pathname[i] != '/') {
 			i--;
 		}
-		if(pathname[i] != '.') { 
+		if(pathname[i + 1] != '.') { 
 			if (S_ISREG(stat_data.st_mode) && (strcmp(".txt", pathname + strlen(pathname) - strlen(".txt")) == 0)) {
 				count_words(pathname);
 	    	} else if (S_ISDIR(stat_data.st_mode)) {
