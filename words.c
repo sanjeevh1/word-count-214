@@ -7,7 +7,7 @@
 #include <errno.h>
 
 
-/* TODO add argument for arraylist/BST */
+
 void process_file(char *pathname) {
 	struct stat stat_data;
 	int r = stat(pathname, &stat_data);
