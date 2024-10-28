@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
 
@@ -14,12 +15,21 @@ void process_file(char *pathname) {
 		perror(pathname);
 	} else {
 		int i = strlen(pathname) - 1;
-		while(i >= 0 && pathname[i] != '/') {
+		while (i >= 0 && pathname[i] != '/') {
 			i--;
 		}
-		if(pathname[i + 1] != '.') { 
+		if (pathname[i + 1] != '.') { 
 			if (S_ISREG(stat_data.st_mode) && (strcmp(".txt", pathname + strlen(pathname) - strlen(".txt")) == 0)) {
-				count_words(pathname);
+				int fd = open(pathname, O_RDONLY);
+				if (fd == -1) {
+					perror(pathname);
+				} else {
+					count_words(fd);
+				}
+				r = close(fd);
+				if(r != 0) {
+					perror(pathname);
+				}
 	    	} else if (S_ISDIR(stat_data.st_mode)) {
 		    	DIR *dirp = opendir(pathname);
 		    	if (dirp == NULL) {
