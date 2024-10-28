@@ -27,7 +27,7 @@ void process_file(char *pathname) {
 					strcat(new_path, "/");
 				    strcat(new_path, direntp->d_name);
 				    process_file(new_path);
-					free(new_path)
+					free(new_path);
 			    }
 				r = closedir(dirp);
 				if (r != 0) {
