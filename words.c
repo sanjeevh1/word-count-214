@@ -68,6 +68,8 @@ void get_words(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
 {
     int bytes, wordstart, pos;
     int bufsize = BUFSIZE;
+    char curr_char;
+    char *curr_word;
     char *buf = malloc(BUFSIZE);
 
     pos = 0;
@@ -77,25 +79,29 @@ void get_words(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
         int bufend = pos + bytes;
         for ( ; pos < bufend; pos++) {
             if (DEBUG > 1) printf("%d/%d/%d: '%c'\n", wordstart, pos, bufend, buf[pos]);
-            // if (isspace(buf[pos])) {
-            if (isspace(buf[pos])) {
+            curr_char = buf[pos];
+            if (isspace(curr_char) || isdigit(curr_char) || ispunct(curr_char)) {
+                // printf("curr_char: %c", curr_char);
                 if (DEBUG) printf("line in bytes %d to %d\n", wordstart, pos);
                 buf[pos] = '\0';
-                use_line(arg, buf + wordstart);
+                curr_word = buf + wordstart;
+                if (isalpha(*curr_word)) {
+                    use_line(arg, curr_word);
+                }
                 wordstart = pos + 1;
             }
         }
         if (wordstart == pos) {
-            // read a complete line
+            // read a word
             pos = 0;
         } else if (wordstart > 0) {
-            // move partial line at end of buffer to start of buffer
+            // move partial word at end of buffer to start of buffer
             int seglength = pos - wordstart;
             memmove(buf, buf + wordstart, seglength);
             pos = seglength;
             if (DEBUG) printf("Moved %d bytes\n", seglength);
         } else if (pos == bufsize) {
-            // line is larger than buffer
+            // word is larger than buffer
             bufsize *= 2;
             buf = realloc(buf, bufsize);
             if (DEBUG) printf("Expanded buffer to %d\n", bufsize);
