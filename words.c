@@ -44,8 +44,6 @@ void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
                         }
                         wordstart = pos + 1;
                     }
-                } else {
-                    
                 }
             // Check for punctuation, space, and numbers
             } else if (isspace(curr_char) || 
