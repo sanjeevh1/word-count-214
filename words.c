@@ -15,7 +15,7 @@
 #endif
 
 #ifndef DEBUG
-#define DEBUG 0
+#define DEBUG 1
 #endif
 
 // void process_file(char *pathname) {
@@ -68,7 +68,7 @@ void get_words(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
 {
     int bytes, wordstart, pos;
     int bufsize = BUFSIZE;
-    char curr_char;
+    char prev_char, curr_char, next_char;
     char *curr_word;
     char *buf = malloc(BUFSIZE);
 
@@ -80,8 +80,28 @@ void get_words(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
         for ( ; pos < bufend; pos++) {
             if (DEBUG > 1) printf("%d/%d/%d: '%c'\n", wordstart, pos, bufend, buf[pos]);
             curr_char = buf[pos];
-            if (isspace(curr_char) || isdigit(curr_char) || ispunct(curr_char)) {
-                // printf("curr_char: %c", curr_char);
+            // Hyphen case
+            if (curr_char == '-') {
+                // Ensure next_char and prev_char are within buffer limits
+                if (pos+1 < bufsize) {
+                    prev_char = buf[pos-1];
+                    next_char = buf[pos+1];
+                    if (isalpha(next_char) && isalpha(prev_char)) {
+                        continue;
+                    } else {
+                        buf[pos] = '\0';
+                        curr_word = buf + wordstart;
+                        if (isalpha(*curr_word)) {
+                            use_line(arg, curr_word);
+                        }
+                        wordstart = pos + 1;
+                    }
+                } else {
+                    
+                }
+            } else if (isspace(curr_char) || 
+                isdigit(curr_char) || 
+                ispunct(curr_char)) {
                 if (DEBUG) printf("line in bytes %d to %d\n", wordstart, pos);
                 buf[pos] = '\0';
                 curr_word = buf + wordstart;
@@ -108,7 +128,7 @@ void get_words(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
         }
         wordstart = 0;
     }
-    if (DEBUG) printf("read returned %d, linestart %d pos %d\n", bytes, wordstart, pos);
+    if (DEBUG) printf("read returned %d, wordstart %d pos %d\n", bytes, wordstart, pos);
     if (wordstart < pos) {
         // incomplete line at end of file/before error
         if (pos == bufsize) {
