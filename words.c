@@ -83,7 +83,7 @@ void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
     free(buf);
 }
 
-char *my_strdup(const char *s) {
+char *strdup(const char *s) {
     size_t len = strlen(s) + 1;
     char *copy = malloc(len);
     if (copy) {
@@ -102,7 +102,7 @@ void count_word(array_t *st, char *word) {
     }
     
     word_t new_word;
-    new_word.word = my_strdup(word);
+    new_word.word = strdup(word);
     new_word.count = 1;
     al_append(st, new_word);
 }
