@@ -31,8 +31,10 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
             // Hyphen case
             if (curr_char == '-') {
                 // Ensure next_char is within buffer limits
-                if (pos+1 < bufsize) {
-                    prev_char = buf[pos-1];
+				if (pos == 0) {
+					wordstart = pos + 1;
+                } else if (pos+1 < bufsize) { 
+					prev_char = buf[pos-1];
                     next_char = buf[pos+1];
                     if (isalpha(next_char) && isalpha(prev_char)) {
                         continue;
