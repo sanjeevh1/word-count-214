@@ -24,8 +24,13 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
 
     pos = 0;
     wordstart = 0;
+	int hyphen_flag = 0;
     while ((bytes = read(fd, buf + pos, bufsize - pos)) > 0) {
         int bufend = pos + bytes;
+		if(hyphen_flag) {
+			pos--;
+			hyphen_flag = 0;
+		}
         for ( ; pos < bufend; pos++) {
             curr_char = buf[pos];
             // Hyphen case
@@ -49,7 +54,7 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
                 } else {
 					prev_char = buf[pos - 1];
 					if (isalpha(prev_char)) {
-						break;
+						hyphen_flag = 1;
 					} else {
 						buf[pos] = '\0';
 						curr_word = buf + wordstart;
@@ -76,11 +81,7 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
         } else if (wordstart > 0) {
             // move partial word at end of buffer to start of buffer
             int seglength = pos - wordstart;
-			if (pos == bufend) {
-            	memmove(buf, buf + wordstart, seglength);
-			} else {
-				memmove(buf, buf + wordstart, seglength + 1);
-			}
+            memmove(buf, buf + wordstart, seglength);
             pos = seglength;
         } else if (pos == bufsize) {
             // word is larger than buffer
