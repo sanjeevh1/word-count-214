@@ -33,9 +33,9 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
                 // Ensure next_char is within buffer limits
 				if (pos == 0) {
 					wordstart = pos + 1;
-                } else if (pos+1 < bufsize) { 
+                } else if(pos + 1 < bufend) { 
 					prev_char = buf[pos-1];
-                    next_char = buf[pos+1];
+					next_char = buf[pos+1];
                     if (isalpha(next_char) && isalpha(prev_char)) {
                         continue;
                     } else {
@@ -46,8 +46,19 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
                         }
                         wordstart = pos + 1;
                     }
-                }
-            // Check for punctuation, space, and numbers
+                } else {
+					prev_char = buf[pos - 1];
+					if (isalpha(prev_char)) {
+						break;
+					} else {
+						buf[pos] = '\0';
+						curr_word = buf + wordstart;
+						if (isalpha(*curr_word) || *curr_word == '\'') {
+							use_word(arg, curr_word);
+						}
+					}
+            	}
+			// Check for punctuation, space, and numbers
             } else if (isspace(curr_char) || 
                 isdigit(curr_char) || 
                 (ispunct(curr_char) && curr_char != '\'')) {
@@ -65,7 +76,11 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
         } else if (wordstart > 0) {
             // move partial word at end of buffer to start of buffer
             int seglength = pos - wordstart;
-            memmove(buf, buf + wordstart, seglength);
+			if (pos == bufend) {
+            	memmove(buf, buf + wordstart, seglength);
+			} else {
+				memmove(buf, buf + wordstart, seglength + 1);
+			}
             pos = seglength;
         } else if (pos == bufsize) {
             // word is larger than buffer
