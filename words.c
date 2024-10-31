@@ -14,7 +14,7 @@
 #define BUFSIZE 8
 #endif
 
-void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
+void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
 {
     int bytes, wordstart, pos;
     int bufsize = BUFSIZE;
@@ -40,7 +40,7 @@ void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
                         buf[pos] = '\0';
                         curr_word = buf + wordstart;
                         if (isalpha(*curr_word)) {
-                            use_line(arg, curr_word);
+                            use_word(arg, curr_word);
                         }
                         wordstart = pos + 1;
                     }
@@ -52,7 +52,7 @@ void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
                 buf[pos] = '\0';
                 curr_word = buf + wordstart;
                 if (isalpha(*curr_word)) {
-                    use_line(arg, curr_word);
+                    use_word(arg, curr_word);
                 }
                 wordstart = pos + 1;
             }
@@ -73,12 +73,12 @@ void get_word(int fd, void (*use_line)(array_t *arg, char *line), array_t *arg)
         wordstart = 0;
     }
     if (wordstart < pos) {
-        // incomplete line at end of file/before error
+        // incomplete word at end of file/before error
         if (pos == bufsize) {
         buf = realloc(buf, bufsize + 1);
         }
         buf[pos] = '\0';
-        use_line(arg, buf + wordstart);
+        use_word(arg, buf + wordstart);
     }
     free(buf);
 }
@@ -107,13 +107,13 @@ void count_word(array_t *st, char *word) {
     al_append(st, new_word);
 }
 
-int valid(char *pathname) {
+int valid(char *pathname, char *filename) {
     struct stat stat_data;
     int r = stat(pathname, &stat_data);
     if (r != 0) {
         perror(pathname);
         return 0;
-    } else if (pathname[0] == '.') {
+    } else if (filename[0] == '.') {
         return 0;
     } else if (S_ISREG(stat_data.st_mode)) {
         return strcmp(".txt", pathname + strlen(pathname) - strlen(".txt")) == 0;
@@ -124,7 +124,7 @@ int valid(char *pathname) {
 }
              
 
-void process_file(char *pathname, void (*use_line)(array_t *arg, char *line), array_t *arg) {
+void process_file(char *pathname, void (*use_word)(array_t *arg, char *line), array_t *arg) {
     struct stat stat_data;
     int r = stat(pathname, &stat_data);
     if (r != 0) {
@@ -135,7 +135,7 @@ void process_file(char *pathname, void (*use_line)(array_t *arg, char *line), ar
             if (fd == -1) {
                 perror(pathname);
             } else {
-                get_word(fd, use_line, arg);
+                get_word(fd, use_word, arg);
                 r = close(fd);
                 if(r != 0) {
                     perror(pathname);
@@ -147,15 +147,17 @@ void process_file(char *pathname, void (*use_line)(array_t *arg, char *line), ar
                 perror(pathname);
             } else {
                 struct dirent *direntp;
+                int pathlen = strlen(pathname);
                 while ((direntp = readdir(dirp)) != NULL) {
-                    if(valid(direntp->d_name)) {
-                        char *new_path = malloc(strlen(pathname) + strlen(direntp->d_name) + 2);
-                        strcpy(new_path, pathname);
-                        strcat(new_path, "/");
-                        strcat(new_path, direntp->d_name);
-                        process_file(new_path, use_line, arg);
-                        free(new_path);
-                    }
+                    int namelen = strlen(direntp->d_name);
+                    char *new_path = malloc(pathlen + 1 + namelen + 1);
+                    memcpy(new_path, pathname, pathlen);
+                    new_path[pathlen] = '/';
+                    memcpy(new_path + pathlen + 1, direntp->d_name, namelen + 1);
+					if(valid(new_path, direntp->d_name)) {
+                    	process_file(new_path, use_word, arg);
+					}
+                    free(new_path);
                 }
                 r = closedir(dirp);
                 if (r != 0) {
