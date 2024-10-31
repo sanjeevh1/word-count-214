@@ -107,46 +107,59 @@ void count_word(array_t *st, char *word) {
     al_append(st, new_word);
 }
 
+int valid(char *pathname) {
+	struct stat stat_data;
+	int r = stat(pathname, &stat_data);
+	if (r != 0) {
+		perror(pathname);
+		return 0;
+	} else if (pathname[0] == '.') {
+		return 0;
+	} else if (S_ISREG(stat_data.st_mode)) {
+		return strcmp(".txt", pathname + strlen(pathname) - strlen(".txt")) == 0;
+	} else if (S_ISDIR(stat_data.st_mode)) {
+		return 1;
+	}
+	return 0;
+}
+			 
+
 void process_file(char *pathname, void (*use_line)(array_t *arg, char *line), array_t *arg) {
     struct stat stat_data;
     int r = stat(pathname, &stat_data);
     if (r != 0) {
         perror(pathname);
-    } else {
-        int i = strlen(pathname) - 1;
-        while (i >= 0 && pathname[i] != '/') {
-            i--;
-        }
-        if (pathname[i + 1] != '.') { 
-            if (S_ISREG(stat_data.st_mode) && (strcmp(".txt", pathname + strlen(pathname) - strlen(".txt")) == 0)) {
-                int fd = open(pathname, O_RDONLY);
-                if (fd == -1) {
+    } else { 
+        if (S_ISREG(stat_data.st_mode)) {
+            int fd = open(pathname, O_RDONLY);
+            if (fd == -1) {
+                perror(pathname);
+            } else {
+                get_word(fd, use_line, arg);
+                r = close(fd);
+                if(r != 0) {
                     perror(pathname);
-                } else {
-                    get_word(fd, use_line, arg);
-                    r = close(fd);
-                    if(r != 0) {
-                        perror(pathname);
-                    }
                 }
-            } else if (S_ISDIR(stat_data.st_mode)) {
-                DIR *dirp = opendir(pathname);
-                if (dirp == NULL) {
+            }
+        } else if (S_ISDIR(stat_data.st_mode)) {
+            DIR *dirp = opendir(pathname);
+            if (dirp == NULL) {
+                perror(pathname);
+            } else {
+                struct dirent *direntp;
+                while ((direntp = readdir(dirp)) != NULL) {
+					if(valid(direntp->d_name)) {
+                    	char *new_path = malloc(strlen(pathname) + strlen(direntp->d_name) + 2);
+                    	strcpy(new_path, pathname);
+                    	strcat(new_path, "/");
+                    	strcat(new_path, direntp->d_name);
+                    	process_file(new_path, use_line, arg);
+                    	free(new_path);
+					}
+                }
+                r = closedir(dirp);
+                if (r != 0) {
                     perror(pathname);
-                } else {
-                    struct dirent *direntp;
-                    while ((direntp = readdir(dirp)) != NULL) {
-                        char *new_path = malloc(strlen(pathname) + strlen(direntp->d_name) + 2);
-                        strcpy(new_path, pathname);
-                        strcat(new_path, "/");
-                        strcat(new_path, direntp->d_name);
-                        process_file(new_path, use_line, arg);
-                        free(new_path);
-                    }
-                    r = closedir(dirp);
-                    if (r != 0) {
-                        perror(pathname);
-                    }
                 }
             }
         }
