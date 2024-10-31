@@ -39,7 +39,7 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
                     } else {
                         buf[pos] = '\0';
                         curr_word = buf + wordstart;
-                        if (isalpha(*curr_word)) {
+                        if (isalpha(*curr_word) || *curr_word == '\'') {
                             use_word(arg, curr_word);
                         }
                         wordstart = pos + 1;
@@ -48,10 +48,10 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
             // Check for punctuation, space, and numbers
             } else if (isspace(curr_char) || 
                 isdigit(curr_char) || 
-                ispunct(curr_char)) {
+                (ispunct(curr_char) && curr_char != '\'')) {
                 buf[pos] = '\0';
                 curr_word = buf + wordstart;
-                if (isalpha(*curr_word)) {
+                if (isalpha(*curr_word) || *curr_word == '\'') {
                     use_word(arg, curr_word);
                 }
                 wordstart = pos + 1;
@@ -154,9 +154,9 @@ void process_file(char *pathname, void (*use_word)(array_t *arg, char *line), ar
                     memcpy(new_path, pathname, pathlen);
                     new_path[pathlen] = '/';
                     memcpy(new_path + pathlen + 1, direntp->d_name, namelen + 1);
-					if(valid(new_path, direntp->d_name)) {
-                    	process_file(new_path, use_word, arg);
-					}
+                    if(valid(new_path, direntp->d_name)) {
+                        process_file(new_path, use_word, arg);
+                    }
                     free(new_path);
                 }
                 r = closedir(dirp);
