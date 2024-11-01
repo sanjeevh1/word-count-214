@@ -13,3 +13,4 @@ void al_init(array_t *, unsigned);
 void al_destroy(array_t *);
 
 void al_append(array_t *, word_t);
+int wordcmp(const void *, const void *);

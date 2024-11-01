@@ -195,6 +195,7 @@ int main(int argc, char **argv)
         for (int i = 1; i < argc; i++) {
             process_file(argv[i], count_word, &words);
         }
+		qsort(words.data, words.length, sizeof(word_t), wordcmp);
         for (int i = 0; i < words.length; i++) {
             printf("%s %d\n", words.data[i].word, words.data[i].count);
         }
