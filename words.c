@@ -61,6 +61,7 @@ void get_word(int fd, void (*use_word)(array_t *arg, char *word), array_t *arg)
 						if (isalpha(*curr_word) || *curr_word == '\'') {
 							use_word(arg, curr_word);
 						}
+						wordstart = pos + 1;
 					}
             	}
 			// Check for punctuation, space, and numbers
