@@ -1,0 +1,5 @@
+text foo  bar.baz
+quux    ./,=[])()qux  quux? 'foo!
+
+
+bar qux qux qux foobar foobar foobar foobaz foobaz foobaz foobaz foobaz bazbar bazbar bazbar foo foo
